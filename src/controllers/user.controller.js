@@ -1,60 +1,143 @@
 const db = require('../config/database');
-
+const User = require('../Models/user');
 
 exports.createUser = async (req, res) => {
-  const { name,email,password,rol_id } = req.body;
-  const state = true;
-  const response = await db.query(
-    'INSERT INTO user_sys (name, email, password, state, rol_id) VALUES ($1, $2, $3, $4, $5)',
-    [name, email, password, state, rol_id],
-  );
+  try {
+    const {
+      name, email, password, rol_id,
+    } = req.body;
+    const state = true;
+    const data = {
+      name, 
+      email, 
+      password, 
+      rol_id, 
+      state
+    }
+    const userDB = new User();
+    const validate = await userDB.findByEmail(data.email);
+    if(validate.rows.length > 0){
+      res.status(400).json({
+        sucess: false,
+        message: 'El correo ya esta registrado'
+      })
+    }else{
+      const response = await userDB.create(data);
+      res.status(201).send({
+        sucess: true,
+        message: 'User register successfully!',
+        data: {
+          name, email, rol_id, state,
+        },
+      });
+    }
+  } catch (error) {
+    res.status(500).send({
+      sucess:false,
+      message: 'Error creating user',
+      error,
+    });
+  }
+};
 
-  res.status(201).send({
-    message: 'User register successfully!',
-    body: {
-      user: { name,email,password,rol_id,state },
-    },
-  });
+exports.loginUser = async (req, res) => {
+  try{
+    const { email, password } = req.body;
+    const userDB = new User();
+    const response = await userDB.login({ email, password });
+    if(response.rows.length > 0){
+      res.status(200).send({
+        sucess: true,
+        message: 'User login successfully!',
+        data: {
+            name: response.rows[0].name,
+            email: response.rows[0].email,
+            rol_id: response.rows[0].rol_id,
+            state: response.rows[0].state
+        },
+      });
+    }else{
+      res.status(404).send({
+        sucess: false,
+        message: 'User not found!',
+      });
+    }
+  } catch (error) {
+    res.status(500).send({
+      sucess:false,
+      message: 'Error login user',
+      error,
+    });
+  }
 };
 
 exports.listAllUsers = async (req, res) => {
-  const response = await db.query(
-    'SELECT * FROM user_sys ORDER BY id ASC',
-  );
-  res.status(200).send(response.rows);
-};
+  try{
+    const userDB = new User();
+    const response = await userDB.listAll();
+    res.status(200).send({
+      sucess: true,
+      message: 'List all users successfully!',
+      data: response.rows,
+    });
+  } catch (error) {
+    res.status(500).send({
+      sucess:false,
+      message: 'Error list all users',
+      error,
+    });
+  }
 
+};
 
 exports.findUserById = async (req, res) => {
-  const id = parseInt(req.params.id);
-  const response = await db.query(
-    'SELECT * FROM user_sys WHERE id = $1',
-    [id],
-  );
-  res.status(200).send(response.rows);
+  try {
+    const { id } = req.params;
+    const userDB = new User();
+    const response = await userDB.findById(id);
+    if(response.rows.length > 0){
+      res.status(200).send({
+        sucess: true,
+        message: 'User find successfully!',
+        data: response.rows[0],
+      });
+    }else{
+      res.status(404).send({
+        sucess: false,
+        message: 'User not found!',
+      });
+    }
+  } catch (error) {
+    res.status(500).send({
+      sucess:false,
+      message: 'Error find user',
+      error,
+    });
+  }
 };
-
-
-exports.updateUserById = async (req, res) => {
-  const id = parseInt(req.params.id);
-  const { name, password, email } = req.body;
-
-  const response = await db.query(
-    'UPDATE user_sys SET name = $1, password = $2, email = $3 WHERE id = $4',
-    [name, password, email, id],
-  );
-
-  res.status(200).send({ message: 'User Updated Successfully!' });
-};
-
 
 exports.deleteUserById = async (req, res) => {
-  const id = parseInt(req.params.id);
-  const state = false;
-  await db.query(
-    'UPDATE user_sys SET state = $1 WHERE id = $2',
-    [ state, id
-    ]);
-
-  res.status(200).send({ message: 'User deleted successfully!', id });
+  try {
+    const { id } = req.params;
+    const userDB = new User();
+    const response = await userDB.findById(id);
+    if(response.rows.length > 0){
+      const response = await userDB.deleteById(id);
+      res.status(200).send({
+        sucess: true,
+        message: 'User delete successfully!',
+      });
+    }else{
+      res.status(404).send({
+        sucess: false,
+        message: 'User not found!',
+      });
+    }
+  } catch (error) {
+    res.status(500).send({
+      sucess:false,
+      message: 'Error delete user',
+      error,
+    });
+  }
 };
