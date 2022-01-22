@@ -18,13 +18,13 @@ exports.createUser = async (req, res) => {
     const validate = await userDB.findByEmail(data.email);
     if(validate.rows.length > 0){
       res.status(400).json({
-        sucess: false,
+        success: false,
         message: 'El correo ya esta registrado'
       })
     }else{
       const response = await userDB.create(data);
       res.status(201).send({
-        sucess: true,
+        success: true,
         message: 'User register successfully!',
         data: {
           name, email, rol_id, state,
@@ -33,7 +33,7 @@ exports.createUser = async (req, res) => {
     }
   } catch (error) {
     res.status(500).send({
-      sucess:false,
+      success:false,
       message: 'Error creating user',
       error,
     });
@@ -47,7 +47,7 @@ exports.loginUser = async (req, res) => {
     const response = await userDB.login({ email, password });
     if(response.rows.length > 0){
       res.status(200).send({
-        sucess: true,
+        success: true,
         message: 'User login successfully!',
         data: {
             name: response.rows[0].name,
@@ -58,13 +58,13 @@ exports.loginUser = async (req, res) => {
       });
     }else{
       res.status(404).send({
-        sucess: false,
+        success: false,
         message: 'User not found!',
       });
     }
   } catch (error) {
     res.status(500).send({
-      sucess:false,
+      success:false,
       message: 'Error login user',
       error,
     });
@@ -76,13 +76,13 @@ exports.listAllUsers = async (req, res) => {
     const userDB = new User();
     const response = await userDB.listAll();
     res.status(200).send({
-      sucess: true,
+      success: true,
       message: 'List all users successfully!',
       data: response.rows,
     });
   } catch (error) {
     res.status(500).send({
-      sucess:false,
+      success:false,
       message: 'Error list all users',
       error,
     });
@@ -97,19 +97,19 @@ exports.findUserById = async (req, res) => {
     const response = await userDB.findById(id);
     if(response.rows.length > 0){
       res.status(200).send({
-        sucess: true,
+        success: true,
         message: 'User find successfully!',
         data: response.rows[0],
       });
     }else{
       res.status(404).send({
-        sucess: false,
+        success: false,
         message: 'User not found!',
       });
     }
   } catch (error) {
     res.status(500).send({
-      sucess:false,
+      success:false,
       message: 'Error find user',
       error,
     });
@@ -124,18 +124,18 @@ exports.deleteUserById = async (req, res) => {
     if(response.rows.length > 0){
       const response = await userDB.deleteById(id);
       res.status(200).send({
-        sucess: true,
+        success: true,
         message: 'User delete successfully!',
       });
     }else{
       res.status(404).send({
-        sucess: false,
+        success: false,
         message: 'User not found!',
       });
     }
   } catch (error) {
     res.status(500).send({
-      sucess:false,
+      success:false,
       message: 'Error delete user',
       error,
     });

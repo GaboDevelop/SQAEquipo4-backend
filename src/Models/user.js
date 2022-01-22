@@ -39,10 +39,11 @@ module.exports = class User {
     }
 
     async deleteById(id) {
+        const state = 0
         return await db.query(
-            'DELETE FROM user_sys WHERE id = $1',
-            [id],
-          )
+            'UPDATE user_sys SET state = $1 WHERE id = $2',
+            [state, id],
+        );
     }
     
 
