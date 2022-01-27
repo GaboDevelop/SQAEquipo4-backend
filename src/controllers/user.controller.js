@@ -46,14 +46,20 @@ exports.loginUser = async (req, res) => {
     const userDB = new User();
     const response = await userDB.login({ email, password });
     if(response.rows.length > 0){
+      const registerTime = new Date();
+      const day = registerTime.getDate();
+      const month = registerTime.getMonth() + 1;
+      const year = registerTime.getFullYear();
+      const hour = registerTime.getHours();
+      const minutes = registerTime.getMinutes();
+      const seconds = registerTime.getSeconds();
+      const date = `${day}-${month}-${year} ${hour}:${minutes}:${seconds}`;
+      await userDB.accessSystem(date, response.rows[0].id);
       res.status(200).send({
         success: true,
         message: 'User login successfully!',
         data: {
-            name: response.rows[0].name,
-            email: response.rows[0].email,
-            rol_id: response.rows[0].rol_id,
-            state: response.rows[0].state
+            ...response.rows[0]
         },
       });
     }else{
@@ -74,7 +80,9 @@ exports.loginUser = async (req, res) => {
 exports.listAllUsers = async (req, res) => {
   try{
     const userDB = new User();
-    const response = await userDB.listAll();
+    const rol = req.query.rol;
+    console.log("rol",  rol)
+    const response = await userDB.listAll(rol);
     res.status(200).send({
       success: true,
       message: 'List all users successfully!',

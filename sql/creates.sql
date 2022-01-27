@@ -17,7 +17,7 @@ CREATE TABLE user_sys (
 
 CREATE TABLE access_system (
     id SERIAL PRIMARY KEY,
-    date DATE NOT NULL,
+    date TIMESTAMP NOT NULL,
     user_id INTEGER NOT NULL,
     FOREIGN KEY (user_id) REFERENCES user_sys(id)
 );
@@ -46,15 +46,13 @@ CREATE TABLE ingredient (
 
 CREATE TABLE order_sandwich (
     id SERIAL PRIMARY KEY,
-    date DATE NOT NULL,
+    date TIMESTAMP NOT NULL,
     user_id INTEGER NOT NULL,
-    cashier_id INTEGER NOT NULL,
     offer_id INTEGER NULL,
     price INTEGER NULL,
     total_price INTEGER NULL,
     estimate_time INTEGER NULL,
     comment VARCHAR(255) NULL,
-    discount INTEGER NULL,
     FOREIGN KEY (user_id) REFERENCES user_sys(id),
     FOREIGN KEY (offer_id) REFERENCES offer(id)
 )
@@ -68,6 +66,7 @@ CREATE TABLE order_sandwich_ingredient (
     sandwich_id INTEGER NOT NULL,
     ingredient_id INTEGER NOT NULL,
     order_id INTEGER NOT NULL,
+    number_sandwich_order INTEGER NOT NULL,
     FOREIGN KEY (sandwich_id) REFERENCES sandwich(id),
     FOREIGN KEY (ingredient_id) REFERENCES ingredient(id),
     FOREIGN KEY (order_id) REFERENCES order_sandwich(id)
