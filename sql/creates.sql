@@ -25,9 +25,8 @@ CREATE TABLE access_system (
 CREATE TABLE offer (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
-    description VARCHAR(255) NOT NULL,
     discount INTEGER NOT NULL,
-    code VARCHAR(255) NOT NULL
+    state BOOLEAN NOT NULL
 );
 
 CREATE TABLE sandwich (
@@ -49,8 +48,8 @@ CREATE TABLE order_sandwich (
     date TIMESTAMP NOT NULL,
     user_id INTEGER NOT NULL,
     offer_id INTEGER NULL,
-    price INTEGER NULL,
-    total_price INTEGER NULL,
+    price numeric NULL,
+    total_price numeric NULL,
     estimate_time INTEGER NULL,
     comment VARCHAR(255) NULL,
     FOREIGN KEY (user_id) REFERENCES user_sys(id),

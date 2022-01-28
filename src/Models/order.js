@@ -3,7 +3,7 @@ const db = require('../config/database');
 module.exports = class Order {
     
     async create(body) {
-        const { data, date, user_id, comment,estimate_time} = body;
+        const { data, date, user_id, comment,estimate_time, offer} = body;
         const order = (await db.query(
             `INSERT INTO order_sandwich (estimate_time, date, user_id, comment) VALUES ($1, $2, $3, $4) RETURNING *`,
             [estimate_time, date, user_id, comment]
@@ -46,26 +46,49 @@ module.exports = class Order {
                     )
                 }
             }
-            const order_update = await db.query(
-                `UPDATE order_sandwich 
-                    SET 
-                    price = $1,
-                    total_price = $2
-                    WHERE id = $3`,
-                [total, total, order_sandwich_id]
-            )
+            let total_price = total
+
+            if(offer){
+                const offer_id = offer.id;
+                const discount = offer.discount;
+                total_price = total_price - (total_price*(discount/100));
+                await db.query(
+                    `UPDATE order_sandwich 
+                        SET 
+                        price = $1,
+                        total_price = $2,
+                        offer_id = $3
+                        WHERE id = $4`,
+                    [
+                        total,
+                        total_price,
+                        offer_id, 
+                        order_sandwich_id
+                    ]
+                )
+            }else{
+                const order_update = await db.query(
+                    `UPDATE order_sandwich 
+                        SET 
+                        price = $1,
+                        total_price = $2
+                        WHERE id = $3`,
+                    [total, total_price, order_sandwich_id]
+                )
+            }
+            
             return order
         }
         return false
     }
 
-    async getAll(id = false) {
-        let query = ""
-        if(id){
-            query = `
+    async getAll(filter = {}) {
+        const {id, init_date, end_date, rol} = filter;
+        let query  = `
             SELECT 
                 order_sandwich.id,
                 order_sandwich.comment,
+                order_sandwich.offer_id,
                 order_sandwich.price,
                 order_sandwich.total_price,
                 order_sandwich.date,
@@ -90,65 +113,44 @@ module.exports = class Order {
             order_sandwich_ingredient.sandwich_id = sandwich.id
             JOIN ingredient ON
             order_sandwich_ingredient.ingredient_id = ingredient.id
-            WHERE 
-                order_sandwich.user_id = $1
-                AND order_sandwich.total_price > 0
-            ORDER BY order_sandwich.id DESC
-            `
-        } else {
-            query = `
-            SELECT 
-                order_sandwich.id,
-                order_sandwich.price,
-                order_sandwich.comment,
-                order_sandwich.total_price,
-                order_sandwich.date,
-                order_sandwich.user_id,
-                order_sandwich.estimate_time,
-                order_sandwich_ingredient.id AS order_sandwich_ingredient_id,
-                order_sandwich_ingredient.number_sandwich_order,
-                order_sandwich_ingredient.price_ingredient,
-                order_sandwich_ingredient.price_sandwich,
-                sandwich.id AS sandwich_id,
-                sandwich.name AS sandwich_name,
-                sandwich.price AS sandwich_price,
-                ingredient.id AS sandwich_ingredient_id,
-                ingredient.name AS ingredient_name,
-                ingredient.price AS ingredient_price
-            FROM order_sandwich
-            JOIN user_sys ON 
-            user_sys.id = order_sandwich.user_id
-            JOIN order_sandwich_ingredient ON
-            order_sandwich.id = order_sandwich_ingredient.order_id
-            JOIN sandwich ON
-            order_sandwich_ingredient.sandwich_id = sandwich.id
-            JOIN ingredient ON
-            order_sandwich_ingredient.ingredient_id = ingredient.id
+            JOIN rol ON
+            user_sys.rol_id = rol.id
             WHERE 
                 order_sandwich.total_price > 0
-            ORDER BY order_sandwich.id DESC
             `
-        }   
-        let orders = []
+       
 
         if(id){
-            //console.log("query", query)
-            orders = (await db.query(
-                query
-            ,
-            [id]
-            )).rows;
-        }else{
-            //console.log("query", query)
-            orders = (await db.query(
-                query
-            )).rows;
+            query += ` AND order_sandwich.user_id = ${id}`
         }
+
+        console.log({
+            init_date,
+            end_date
+        })
+        if(init_date && end_date){
+            query += ` AND order_sandwich.date BETWEEN '${init_date}' AND '${end_date}'`
+        }
+
+        if(rol){
+            query += ` AND rol.name = '${rol}'`
+        }
+
+
+        let orders = (await db.query(
+                query
+            )).rows;
+        
+        let offers = (await db.query(
+            'SELECT * FROM offer WHERE state = true ORDER BY id ASC'
+        )).rows;
+        
         
         const orders_return = []
         for(let i = 0; i < orders.length; i++){
             const order = orders[i];
             const index = orders_return.findIndex(o => o.id === order.id);
+            const offer = offers.find(o => o.id === order.offer_id);
             if(index === -1){
                 orders_return.push({
                     id: order.id,
@@ -157,6 +159,7 @@ module.exports = class Order {
                     estimate_time: order.estimate_time,
                     total_price: order.total_price,
                     price: order.price,
+                    offer,
                     comment: order.comment,
                     sandwichs: [
                         {
@@ -216,6 +219,13 @@ module.exports = class Order {
         
         
         return order
+    }
+    
+    async getOrdersGroupByDate() {
+        return (await db.query(
+            `SELECT  CAST(date AS DATE) ,count(*)from order_sandwich
+            group by CAST(date AS DATE);`,
+        )).rows;
     }
 
 }

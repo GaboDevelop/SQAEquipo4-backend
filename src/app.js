@@ -9,6 +9,7 @@ const rolRoute = require('./routes/rol.routes');
 const sandwichRoute = require('./routes/sandwich.routes');
 const ingredientRoute = require('./routes/ingredient.routes');
 const orderRoute = require('./routes/order.routes');
+const offerRoute = require('./routes/offer.routes');
 
 
 app.use(express.urlencoded({ extended: true }));
@@ -24,5 +25,6 @@ app.use('/api', rolRoute);
 app.use('/api', sandwichRoute);
 app.use('/api', ingredientRoute);
 app.use('/api', orderRoute);
+app.use('/api', offerRoute);
 
 module.exports = app;

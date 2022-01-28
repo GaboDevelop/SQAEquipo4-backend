@@ -10,4 +10,19 @@ module.exports = class Ingredient {
           );
     }
 
+    async getIngredientsMostSold() {
+        return await db.query(
+                ` SELECT
+                ingredient.name,
+                ingredient.price as price,
+                count(*) as quantity,
+                count(*)*ingredient.price as total
+            FROM ingredient
+            JOIN order_sandwich_ingredient osi on ingredient.id = osi.ingredient_id
+
+            group by ingredient.name,ingredient.price`,
+        );
+    }
+
 }
+

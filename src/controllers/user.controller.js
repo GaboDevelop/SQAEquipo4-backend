@@ -77,6 +77,44 @@ exports.loginUser = async (req, res) => {
   }
 };
 
+
+exports.getAccessSystem = async (req, res) => {
+  try{
+    const userDB = new User();
+    const { init_date, end_date,rol } = req.query
+    const response = await userDB.getAccessSystem({ init_date, end_date, rol });
+    res.status(200).send({
+      success: true,
+      message: 'Access system',
+      data:response.rows,
+    });
+  } catch (error) {
+    res.status(500).send({
+      success:false,
+      message: 'Error get access system',
+      error,
+    });
+  }
+}
+
+exports.getAccessSystemGroupByUser = async (req, res) => {
+  try{
+    const userDB = new User();
+    const response = await userDB.getAccessSystemGroupByUser();
+    res.status(200).send({
+      success: true,
+      message: 'Access system',
+      data:response.rows,
+    });
+  } catch (error) {
+    res.status(500).send({
+      success:false,
+      message: 'Error get access system',
+      error,
+    });
+  }
+}
+
 exports.listAllUsers = async (req, res) => {
   try{
     const userDB = new User();
@@ -149,3 +187,21 @@ exports.deleteUserById = async (req, res) => {
     });
   }
 };
+
+exports.getAmountTotalByUser = async (req, res) => {
+  try{
+    const userDB = new User();
+    const response = await userDB.getAmountTotalByUser();
+    res.status(200).send({
+      success: true,
+      message: 'Access system',
+      data:response,
+    });
+  } catch (error) {
+    res.status(500).send({
+      success:false,
+      message: 'Error get access system',
+      error,
+    });
+  }
+}

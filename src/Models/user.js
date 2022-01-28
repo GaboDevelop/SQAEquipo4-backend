@@ -25,6 +25,37 @@ module.exports = class User {
           )
     }
 
+    async getAccessSystem(filter = {}) {
+        const { init_date, end_date, rol} = filter;
+        let query = `SELECT 
+                        access_system.id,
+                        access_system.date,
+                        user_sys.name,
+                        user_sys.email,
+                        rol.name as rol_name,
+                        rol.id as rol_id
+                    FROM access_system
+                    JOIN user_sys ON 
+                        access_system.user_id = user_sys.id
+                    JOIN rol ON
+                        user_sys.rol_id = rol.id
+                    `
+        if(init_date && end_date) {
+            query += `WHERE access_system.date BETWEEN '${init_date}' AND '${end_date}'`
+        }
+        if(rol){
+            if(init_date && end_date) {
+                query += ` AND rol.name = '${rol}'`
+            } else {
+                query += `WHERE rol.name = '${rol}'`
+            }
+        }
+        return await db.query(
+            query
+          )
+
+    }
+
     async findByEmail(email) {
         return await db.query(
             'SELECT * FROM user_sys WHERE email = $1',
@@ -33,7 +64,6 @@ module.exports = class User {
     }
 
     async listAll(rol = false) {
-        console.log("rol",  rol)
         if(rol) {
             return await db.query(
                 `SELECT 
@@ -86,6 +116,38 @@ module.exports = class User {
             'UPDATE user_sys SET state = $1 WHERE id = $2',
             [state, id],
         );
+    }
+
+    async getAccessSystemGroupByUser(filter = {}) {
+        return await db.query(
+            `SELECT  us.name, us.email, count(*)from access_system
+            join user_sys us on us.id = access_system.user_id
+            group by us.name, us.email;`
+        );
+    }
+
+    async getAmountTotalByUser() {
+        const rows = (await db.query(`
+        SELECT
+                order_sandwich.total_price,
+                us.email,
+                us.name,
+                us.id
+        from order_sandwich
+        join user_sys us on us.id = order_sandwich.user_id
+        `)).rows;
+        let rows_return = [];
+        for(let i = 0; i < rows.length; i++) {
+            let row = rows[i];
+            const index = rows_return.findIndex(r => r.id === row.id);
+            if(index === -1) {
+                rows_return.push(row);
+            } else {
+                rows_return[index].total_price += row.total_price;
+            }
+        }
+
+        return rows_return;
     }
     
 

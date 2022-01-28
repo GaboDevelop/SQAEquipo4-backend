@@ -9,5 +9,7 @@ router.post('/orders', orderController.createOrder);
 router.get('/orders', orderController.listAllOrders);
 // ==> (DELETE): localhost:3000/api/orders/:id
 router.delete('/orders/:id', orderController.deleteOrder);
+// ==> (GET): localhost:3000/api/orders/date
+router.get('/orders/date', orderController.ordersGroupByDate);
 
 module.exports = router;
